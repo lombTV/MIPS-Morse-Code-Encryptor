@@ -45,7 +45,28 @@ upperEnd:
 
 length2Char:
 	#Define your code here
-	li $v0, 0
+	### Register Usage
+	# $a0 = String Argument.
+	# $a1 = Argument Character.
+	# $t1 = length2Char counter.
+	# $t2 = The current character of the string.
+	# $t3 = The breaker character.
+	# $v0 = Final Output.
+	li $t1, 0
+	lb $t3, 0($a1)
+	
+	length2Loop:  
+    		lb $t2, 0($a0)  # $t2 = the first character of $s0.
+    		beq $t2, 0x0, length2End   # if $t2 == 0 then go to label end 
+    		beq $t2, $t3, length2End
+    		add $t1, $t1, 1        # Increment the $t1 counter.
+    		add $a0, $a0, 1
+    		j length2Loop      # finally loop  
+   
+length2End:
+	# Save buffer to $v0 and jump back
+	move $v0, $t1
+	
 	jr $ra
 
 strcmp:
