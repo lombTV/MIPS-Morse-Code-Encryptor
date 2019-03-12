@@ -6,6 +6,7 @@
 .data
 upperLength:	.word 20
 buffer:	.space 256
+nullBuffer: .asciiz "0"
 .text
 
 ##############################
@@ -66,11 +67,73 @@ length2Char:
 length2End:
 	# Save buffer to $v0 and jump back
 	move $v0, $t1
-	
 	jr $ra
 
 strcmp:
+	### Register Usage
+	# $a0 = Argument Input 1
+	# $a1 = Argument Input 2
+	# $a2 = Length
+	# $v0 = Number of characters in string that matched.
+	# $v1 = Indicates whether a match was found. 1 = Yes, 0 = No
+
+	
+	# If length ($a2) < 0, invalid response and return 0.
+	bltz $a2, strcmpInvalid
+	# If length > 0 and length > $a0.length or $a1. length, invalid response and return 0. 
+	
+	# Get length of first string and compare
+	move $s0, $a0
+	move $s1, $a1
+	la $a1, nullBuffer
+	la $s2, ($ra)
+	jal length2Char
+	move $ra, $s2
+	bgt $a2, $v0, strcmpInvalid
+	# bgt $v0, $a2, strcmpLessThanZero
+	# get length of second string and compare
+	move $a0, $s1
+	la $a1, nullBuffer
+	la $s2, ($ra)
+	jal length2Char
+	move $ra, $s2
+	bgt $a2, $v0, strcmpInvalid
+	# bgt $v0, $a2, strcmpInvalid
+	# If length > 0 and length < $a0.length and $a1.length...
+	# $v1 = 1;
+	li $v0, 0
+	li $v1, 1
+	move $a0, $s0
+	move $a1, $s1
+	# for i = 0; i < length; i++...
+	strcmpLoop:
+		addi $v0, $v0, 1
+		bgt $v0, $a2, strcmpLoopEnd
+		# Load $a0[i] to $t0
+		lb $t0, 0($a0)
+		# Load $a1[i] to $t1
+		lb $t1, 0($a1)
+		# if $t1 == $t2, $v0++
+		addi $a0, $a0, 1
+		addi $a1, $a1, 1
+		beq $t0, $t1, strcmpLoopTrue
+		# else, $v1 = 0 and break.
+		j strcmpLoopFalse
+	strcmpLoopTrue:
+		j strcmpLoop
+	strcmpLoopFalse:
+		li $v1, 0
+		subi $v0, $v0, 1
+		jr $ra
+	# if $a0[i] == $a1[i], $v0++. else, $v1 = 0..
 	#Define your code here
+	strcmpLoopEnd:
+	subi $v0, $v0, 1
+	jr $ra
+	
+strcmpInvalid:
+	li $v0, 0
+	li $v1, 0
 	jr $ra
 
 ##############################
